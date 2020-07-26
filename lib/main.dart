@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:web_scraper/web_scraper.dart';
 import 'package:flutter/material.dart';
 
 void main() => runApp(MyApp());
@@ -25,6 +26,12 @@ class _MyHomePageState extends State<MyHomePage> {
   final firestoreInstance = Firestore.instance;
 
   @override
+  void dispose() {
+    textEditingController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text('Share Store')),
@@ -44,33 +51,39 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
-  Widget _buildContainer(
-      BuildContext context, List<DocumentSnapshot> snapshotList) {
+  Widget _buildContainer(BuildContext context,
+      List<DocumentSnapshot> snapshotList) {
     return Container(
         child: Column(
-      children: <Widget>[
-        Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: TextField(
-            decoration: InputDecoration(hintText: 'URLを共有しよう'),
-            controller: textEditingController,
-          ),
-        ),
-        Expanded(
-          child: ListView(
-            padding: const EdgeInsets.only(top: 20.0),
-            children: snapshotList
-                .map((snapshot) => _buildListItem(context, snapshot))
-                .toList(),
-          ),
-        )
-      ],
-    ));
+          children: <Widget>[
+            Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: TextField(
+                decoration: InputDecoration(hintText: 'URLを共有しよう'),
+                controller: textEditingController,
+              ),
+            ),
+            Expanded(
+              child: ListView(
+                padding: const EdgeInsets.only(top: 20.0),
+                children: snapshotList
+                    .map((snapshot) => _buildListItem(context, snapshot))
+                    .toList(),
+              ),
+            )
+          ],
+        ));
   }
 
   Widget _buildFloatingActionButton() {
     return FloatingActionButton(
       onPressed: () async {
+        final webScraper = WebScraper('https://example.com');
+        if (await webScraper.loadWebPage('/')) {
+          final elements = webScraper.getPageContent();
+          print(elements);
+        }
+
         await firestoreInstance
             .collection("store")
             .add({'name': textEditingController.text});
