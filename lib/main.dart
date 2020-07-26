@@ -7,7 +7,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Baby Names',
+      title: 'Share Store',
       home: MyHomePage(),
     );
   }
@@ -29,63 +29,64 @@ class _MyHomePageState extends State<MyHomePage> {
     return Scaffold(
       appBar: AppBar(title: Text('Share Store')),
       body: _buildBody(context),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () async {
-          print(textEditingController.text);
-          DocumentReference ref =
-              await firestoreInstance.collection("baby").add({
-            'name': textEditingController.text,
-            'votes': 1
-          });
-          print(ref.documentID);
-
-          textEditingController.clear();
-        },
-        child: Icon(Icons.add),
-      ),
+      floatingActionButton: _buildFloatingActionButton(),
     );
   }
 
   Widget _buildBody(BuildContext context) {
     return StreamBuilder<QuerySnapshot>(
-      stream: firestoreInstance.collection('baby').snapshots(),
+      stream: firestoreInstance.collection('store').snapshots(),
       builder: (context, snapshot) {
         if (!snapshot.hasData) return LinearProgressIndicator();
 
-        return _buildList(context, snapshot.data.documents);
+        return _buildContainer(context, snapshot.data.documents);
       },
     );
   }
 
-  Widget _buildList(BuildContext context, List<DocumentSnapshot> snapshot) {
+  Widget _buildContainer(
+      BuildContext context, List<DocumentSnapshot> snapshotList) {
     return Container(
         child: Column(
       children: <Widget>[
         Padding(
           padding: const EdgeInsets.all(16.0),
           child: TextField(
-            decoration: InputDecoration(
-              hintText: 'URLを共有しよう'
-            ),
+            decoration: InputDecoration(hintText: 'URLを共有しよう'),
             controller: textEditingController,
           ),
         ),
         Expanded(
           child: ListView(
             padding: const EdgeInsets.only(top: 20.0),
-            children:
-                snapshot.map((data) => _buildListItem(context, data)).toList(),
+            children: snapshotList
+                .map((snapshot) => _buildListItem(context, snapshot))
+                .toList(),
           ),
         )
       ],
     ));
   }
 
-  Widget _buildListItem(BuildContext context, DocumentSnapshot data) {
-    final record = Record.fromSnapshot(data);
+  Widget _buildFloatingActionButton() {
+    return FloatingActionButton(
+      onPressed: () async {
+        await firestoreInstance
+            .collection("store")
+            .add({'name': textEditingController.text});
+
+        textEditingController.clear();
+      },
+      child: Icon(Icons.add),
+    );
+  }
+
+  Widget _buildListItem(BuildContext context, DocumentSnapshot snapshot) {
+    assert(snapshot.data['name'] != null);
+    final name = snapshot.data['name'];
 
     return Padding(
-      key: ValueKey(record.name),
+      key: ValueKey(name),
       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
       child: Container(
         decoration: BoxDecoration(
@@ -93,30 +94,12 @@ class _MyHomePageState extends State<MyHomePage> {
           borderRadius: BorderRadius.circular(5.0),
         ),
         child: ListTile(
-          title: Text(record.name),
-          trailing: Text(record.votes.toString()),
-          onTap: () =>
-              record.reference.updateData({'votes': FieldValue.increment(1)}),
-        ),
+            title: Text(name),
+            onTap: () {
+              // TODO: 詳細ページへ繊維など(無いかも)
+              print(name + ' がtapされたよ');
+            }),
       ),
     );
   }
-}
-
-class Record {
-  final String name;
-  final int votes;
-  final DocumentReference reference;
-
-  Record.fromMap(Map<String, dynamic> map, {this.reference})
-      : assert(map['name'] != null),
-        assert(map['votes'] != null),
-        name = map['name'],
-        votes = map['votes'];
-
-  Record.fromSnapshot(DocumentSnapshot snapshot)
-      : this.fromMap(snapshot.data, reference: snapshot.reference);
-
-  @override
-  String toString() => "Record<$name:$votes>";
 }
