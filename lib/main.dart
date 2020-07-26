@@ -21,17 +21,34 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> {
+  final textEditingController = TextEditingController();
+  final firestoreInstance = Firestore.instance;
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Baby Name Votes')),
+      appBar: AppBar(title: Text('Share Store')),
       body: _buildBody(context),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () async {
+          print(textEditingController.text);
+          DocumentReference ref =
+              await firestoreInstance.collection("baby").add({
+            'name': textEditingController.text,
+            'votes': 1
+          });
+          print(ref.documentID);
+
+          textEditingController.clear();
+        },
+        child: Icon(Icons.add),
+      ),
     );
   }
 
   Widget _buildBody(BuildContext context) {
     return StreamBuilder<QuerySnapshot>(
-      stream: Firestore.instance.collection('baby').snapshots(),
+      stream: firestoreInstance.collection('baby').snapshots(),
       builder: (context, snapshot) {
         if (!snapshot.hasData) return LinearProgressIndicator();
 
@@ -41,10 +58,27 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Widget _buildList(BuildContext context, List<DocumentSnapshot> snapshot) {
-    return ListView(
-      padding: const EdgeInsets.only(top: 20.0),
-      children: snapshot.map((data) => _buildListItem(context, data)).toList(),
-    );
+    return Container(
+        child: Column(
+      children: <Widget>[
+        Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: TextField(
+            decoration: InputDecoration(
+              hintText: 'URLを共有しよう'
+            ),
+            controller: textEditingController,
+          ),
+        ),
+        Expanded(
+          child: ListView(
+            padding: const EdgeInsets.only(top: 20.0),
+            children:
+                snapshot.map((data) => _buildListItem(context, data)).toList(),
+          ),
+        )
+      ],
+    ));
   }
 
   Widget _buildListItem(BuildContext context, DocumentSnapshot data) {
