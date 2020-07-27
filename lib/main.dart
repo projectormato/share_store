@@ -128,14 +128,25 @@ class _MyHomePageState extends State<MyHomePage> {
           border: Border.all(color: Colors.grey),
           borderRadius: BorderRadius.circular(5.0),
         ),
-        child: ListTile(
-            title: Text(name),
-            subtitle: Text(address + '\n\n' + hours),
-            isThreeLine: true,
-            onTap: () {
-              // TODO: 詳細ページへ繊維など(無いかも)
-              print(name + ' がtapされたよ');
-            }),
+        child: Dismissible(
+          key: Key(name),
+          onDismissed: (_) async {
+            print(name + ' がdismissされたよ');
+            await firestoreInstance
+                .collection('store')
+                .where('name', isEqualTo: name)
+                .getDocuments()
+                .then((value) => value.documents[0].reference.delete());
+          },
+          child: ListTile(
+              title: Text(name),
+              subtitle: Text(address + '\n\n' + hours),
+              isThreeLine: true,
+              onTap: () async {
+                // TODO: 詳細ページへ繊維など(無いかも)
+                print(name + ' がtapされたよ');
+              }),
+        ),
       ),
     );
   }
