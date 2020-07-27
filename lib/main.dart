@@ -33,14 +33,29 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: Text('Share Store')),
-      body: _buildBody(context),
-      floatingActionButton: _buildFloatingActionButton(),
+    return DefaultTabController(
+      length: 2,
+      child: Scaffold(
+        appBar: AppBar(
+            bottom: TabBar(
+              tabs: [
+                Tab(icon: Icon(Icons.add_circle_outline)),
+                Tab(icon: Icon(Icons.map)),
+              ],
+            ),
+            title: Text('Share Store')),
+        body: TabBarView(
+          children: [
+            _buildAddBody(context),
+            _buildMapBody(context),
+          ],
+        ),
+        floatingActionButton: _buildFloatingActionButton(),
+      ),
     );
   }
 
-  Widget _buildBody(BuildContext context) {
+  Widget _buildAddBody(BuildContext context) {
     return StreamBuilder<QuerySnapshot>(
       stream: firestoreInstance.collection('store').snapshots(),
       builder: (context, snapshot) {
@@ -75,6 +90,18 @@ class _MyHomePageState extends State<MyHomePage> {
     ));
   }
 
+  Widget _buildMapBody(BuildContext context) {
+    // TODO: Map側の描画をする
+    return StreamBuilder<QuerySnapshot>(
+      stream: firestoreInstance.collection('store').snapshots(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) return LinearProgressIndicator();
+
+        return _buildContainer(context, snapshot.data.documents);
+      },
+    );
+  }
+
   Widget _buildFloatingActionButton() {
     return FloatingActionButton(
       onPressed: () async {
@@ -106,7 +133,8 @@ class _MyHomePageState extends State<MyHomePage> {
       final storeName = (storeInfo[0]['title'] as String).trim();
       final storeAddress =
           (storeInfo[4]['title'] as String).trim().split(' ')[0];
-      final storeHours = (storeInfo[6]['title'] as String).trim();
+      final storeHours =
+          (storeInfo[6]['title'] as String).trim().split('営業時間・')[0];
       return [storeName, storeAddress, storeHours];
     }
     return ["", "", ""];
