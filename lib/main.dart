@@ -51,42 +51,42 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
-  Widget _buildContainer(BuildContext context,
-      List<DocumentSnapshot> snapshotList) {
+  Widget _buildContainer(
+      BuildContext context, List<DocumentSnapshot> snapshotList) {
     return Container(
         child: Column(
-          children: <Widget>[
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: TextField(
-                decoration: InputDecoration(hintText: 'URLを共有しよう'),
-                controller: textEditingController,
-              ),
-            ),
-            Expanded(
-              child: ListView(
-                padding: const EdgeInsets.only(top: 20.0),
-                children: snapshotList
-                    .map((snapshot) => _buildListItem(context, snapshot))
-                    .toList(),
-              ),
-            )
-          ],
-        ));
+      children: <Widget>[
+        Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: TextField(
+            decoration: InputDecoration(hintText: 'URLを共有しよう'),
+            controller: textEditingController,
+          ),
+        ),
+        Expanded(
+          child: ListView(
+            padding: const EdgeInsets.only(top: 20.0),
+            children: snapshotList
+                .map((snapshot) => _buildListItem(context, snapshot))
+                .toList(),
+          ),
+        )
+      ],
+    ));
   }
 
   Widget _buildFloatingActionButton() {
     return FloatingActionButton(
       onPressed: () async {
-        final webScraper = WebScraper('https://example.com');
-        if (await webScraper.loadWebPage('/')) {
-          final elements = webScraper.getPageContent();
-          print(elements);
-        }
+        var inputText = textEditingController.text;
+        final storeInfoList = await scrapingPage(inputText);
 
-        await firestoreInstance
-            .collection("store")
-            .add({'name': textEditingController.text});
+        await firestoreInstance.collection("store").add({
+          'url': inputText,
+          'name': storeInfoList[0],
+          'address': storeInfoList[1],
+          'hours': storeInfoList[2]
+        });
 
         textEditingController.clear();
       },
@@ -94,9 +94,31 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
+  Future<List<String>> scrapingPage(String inputText) async {
+    final webScraper = WebScraper(inputText);
+    if (await webScraper.loadWebPage('/')) {
+      final storeInfo =
+          webScraper.getElement('.rstinfo-table__table>tbody>tr>td', []);
+      if (storeInfo.isEmpty) {
+        return ["", "", ""];
+      }
+
+      final storeName = (storeInfo[0]['title'] as String).trim();
+      final storeAddress =
+          (storeInfo[4]['title'] as String).trim().split(' ')[0];
+      final storeHours = (storeInfo[6]['title'] as String).trim();
+      return [storeName, storeAddress, storeHours];
+    }
+    return ["", "", ""];
+  }
+
   Widget _buildListItem(BuildContext context, DocumentSnapshot snapshot) {
     assert(snapshot.data['name'] != null);
+    assert(snapshot.data['address'] != null);
+    assert(snapshot.data['hours'] != null);
     final name = snapshot.data['name'];
+    final address = snapshot.data['address'];
+    final hours = snapshot.data['hours'];
 
     return Padding(
       key: ValueKey(name),
@@ -108,6 +130,8 @@ class _MyHomePageState extends State<MyHomePage> {
         ),
         child: ListTile(
             title: Text(name),
+            subtitle: Text(address + '\n\n' + hours),
+            isThreeLine: true,
             onTap: () {
               // TODO: 詳細ページへ繊維など(無いかも)
               print(name + ' がtapされたよ');
