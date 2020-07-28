@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:web_scraper/web_scraper.dart';
 import 'package:flutter/material.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 void main() => runApp(MyApp());
 
@@ -24,6 +25,12 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   final textEditingController = TextEditingController();
   final firestoreInstance = Firestore.instance;
+
+  GoogleMapController mapController;
+  final LatLng _center = const LatLng(45.521563, -122.677433);
+  void _onMapCreated(GoogleMapController controller) {
+    mapController = controller;
+  }
 
   @override
   void dispose() {
@@ -91,14 +98,12 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   Widget _buildMapBody(BuildContext context) {
-    // TODO: Map側の描画をする
-    return StreamBuilder<QuerySnapshot>(
-      stream: firestoreInstance.collection('store').snapshots(),
-      builder: (context, snapshot) {
-        if (!snapshot.hasData) return LinearProgressIndicator();
-
-        return _buildContainer(context, snapshot.data.documents);
-      },
+    return GoogleMap(
+      onMapCreated: _onMapCreated,
+      initialCameraPosition: CameraPosition(
+        target: _center,
+        zoom: 11.0,
+      ),
     );
   }
 

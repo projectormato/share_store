@@ -24,6 +24,7 @@ dependencies:
   flutter:
     sdk: flutter
   cloud_firestore: ^0.13.0+1
+  google_maps_flutter: ^0.5.28+1
   web_scraper: 0.0.6
 
 
