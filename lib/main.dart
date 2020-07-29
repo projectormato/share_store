@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:web_scraper/web_scraper.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:geocoder/geocoder.dart';
 
 void main() => runApp(MyApp());
 
@@ -25,11 +26,49 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   final textEditingController = TextEditingController();
   final firestoreInstance = Firestore.instance;
-
   GoogleMapController mapController;
-  final LatLng _center = const LatLng(45.521563, -122.677433);
-  void _onMapCreated(GoogleMapController controller) {
-    mapController = controller;
+
+  // MEMO: 渋谷駅
+  final LatLng _center = const LatLng(35.6580382, 139.6994471);
+  final Map<String, Marker> _markers = {};
+
+  Future<void> _onMapCreated(GoogleMapController controller) async {
+//    final icon = await BitmapDescriptor.fromAssetImage(
+//        ImageConfiguration(size: Size(24, 24)), 'assets/marker.png');
+    List<Store> stores = [];
+    final documents = await firestoreInstance
+        .collection('store')
+        .snapshots()
+        .map((event) => event.documents)
+        .first;
+
+    for (int i = 0; i < documents.length; i++) {
+      final data = documents[i].data;
+      var address =
+          await Geocoder.local.findAddressesFromQuery(data['address']);
+      var coordinates = address.first.coordinates;
+      print("$coordinates");
+      stores.add(Store(data['name'], data['address'], coordinates.latitude,
+          coordinates.longitude));
+    }
+
+    setState(() {
+      _markers.clear();
+      for (var store in stores) {
+        final marker = Marker(
+          markerId: MarkerId(store.name),
+          position: LatLng(store.latitude, store.longitude),
+          // TODO: マーカーの画像変える
+          icon:
+              BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure),
+          infoWindow: InfoWindow(
+            title: store.name,
+            snippet: store.address,
+          ),
+        );
+        _markers[store.name] = marker;
+      }
+    });
   }
 
   @override
@@ -104,6 +143,7 @@ class _MyHomePageState extends State<MyHomePage> {
         target: _center,
         zoom: 11.0,
       ),
+      markers: _markers.values.toSet(),
     );
   }
 
@@ -183,4 +223,13 @@ class _MyHomePageState extends State<MyHomePage> {
       ),
     );
   }
+}
+
+class Store {
+  String name;
+  String address;
+  double latitude;
+  double longitude;
+
+  Store(this.name, this.address, this.latitude, this.longitude);
 }
