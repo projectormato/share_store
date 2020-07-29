@@ -33,8 +33,8 @@ class _MyHomePageState extends State<MyHomePage> {
   final Map<String, Marker> _markers = {};
 
   Future<void> _onMapCreated(GoogleMapController controller) async {
-//    final icon = await BitmapDescriptor.fromAssetImage(
-//        ImageConfiguration(size: Size(24, 24)), 'assets/marker.png');
+    final icon = await BitmapDescriptor.fromAssetImage(
+        ImageConfiguration(size: Size(32, 32)), 'assets/marker.png');
     List<Store> stores = [];
     final documents = await firestoreInstance
         .collection('store')
@@ -58,9 +58,7 @@ class _MyHomePageState extends State<MyHomePage> {
         final marker = Marker(
           markerId: MarkerId(store.name),
           position: LatLng(store.latitude, store.longitude),
-          // TODO: マーカーの画像変える
-          icon:
-              BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure),
+          icon: icon,
           infoWindow: InfoWindow(
             title: store.name,
             snippet: store.address,
@@ -219,7 +217,6 @@ class _MyHomePageState extends State<MyHomePage> {
               subtitle: Text(address + '\n\n' + hours),
               isThreeLine: true,
               onTap: () async {
-                // TODO: 詳細ページへ繊維など(無いかも)
                 print(name + ' がtapされたよ');
               }),
         ),
