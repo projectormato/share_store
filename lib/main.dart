@@ -91,6 +91,7 @@ class _MyHomePageState extends State<MyHomePage> {
             ),
             title: Text('Share Store')),
         body: TabBarView(
+          physics: NeverScrollableScrollPhysics(),
           children: [
             _buildAddBody(context),
             _buildMapBody(context),
@@ -138,6 +139,8 @@ class _MyHomePageState extends State<MyHomePage> {
 
   Widget _buildMapBody(BuildContext context) {
     return GoogleMap(
+      myLocationButtonEnabled: false,
+      zoomGesturesEnabled: true,
       onMapCreated: _onMapCreated,
       initialCameraPosition: CameraPosition(
         target: _center,
