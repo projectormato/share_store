@@ -3,6 +3,7 @@ import 'package:web_scraper/web_scraper.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geocoder/geocoder.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 void main() => runApp(MyApp());
 
@@ -61,11 +62,20 @@ class _MyHomePageState extends State<MyHomePage> {
           infoWindow: InfoWindow(
             title: store.name,
             snippet: store.address,
+            onTap: () =>  _launchURL(store.address)
           ),
         );
         _markers[store.name] = marker;
       }
     });
+  }
+
+  _launchURL(String url) async {
+    if (await canLaunch(url)) {
+      await launch(url);
+    } else {
+      throw 'Could not launch $url';
+    }
   }
 
   @override
@@ -216,7 +226,8 @@ class _MyHomePageState extends State<MyHomePage> {
               title: Text(name),
               subtitle: Text(address + '\n\n' + hours),
               isThreeLine: true,
-              onTap: () async {
+              onTap: () {
+                _launchURL(address);
                 print(name + ' がtapされたよ');
               }),
         ),
