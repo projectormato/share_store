@@ -26,7 +26,6 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   final textEditingController = TextEditingController();
   final firestoreInstance = Firestore.instance;
-  GoogleMapController mapController;
 
   // MEMO: 渋谷駅
   final LatLng _center = const LatLng(35.6580382, 139.6994471);
@@ -102,7 +101,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
   Widget _buildAddBody(BuildContext context) {
     return StreamBuilder<QuerySnapshot>(
-      stream: firestoreInstance.collection('store').snapshots(),
+      stream: firestoreInstance.collection('store').orderBy('sort').snapshots(),
       builder: (context, snapshot) {
         if (!snapshot.hasData) return LinearProgressIndicator();
 
@@ -158,7 +157,8 @@ class _MyHomePageState extends State<MyHomePage> {
           'url': inputText,
           'name': storeInfoList[0],
           'address': storeInfoList[1],
-          'hours': storeInfoList[2]
+          'hours': storeInfoList[2],
+          'sort': FieldValue.serverTimestamp()
         });
 
         textEditingController.clear();
